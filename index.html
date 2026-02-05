@@ -138,21 +138,40 @@
     </div>
 
     <script>
-        // Google Sheets API ayarları
-        const SPREADSHEET_ID = 'BURAYA_SPREADSHEET_ID_YAZIN'; // Sheets URL'indeki ID
-        const API_KEY = 'BURAYA_API_KEY_YAZIN'; // Google Cloud Console'dan aldığınız API Key
-        const RANGE = 'Sheet1!A2:E'; // A2'den başlayarak tüm veriler (başlık satırını atla)
+        // Google Sheets URL'sinden ID'yi al ve CSV export linki oluştur
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1i-SavB2fH_vZWLwV2ocY3JZm0P5Igp28kf666mBGX5A'; // Örn: https://docs.google.com/spreadsheets/d/ABC123xyz/edit
+        
+        // URL'den Spreadsheet ID'sini çıkar
+        function getSpreadsheetId(url) {
+            const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : null;
+        }
 
-        // Verileri çek
+        // CSV formatında veri çek
         async function fetchRooms() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            const spreadsheetId = getSpreadsheetId(SHEET_URL);
+            
+            if (!spreadsheetId) {
+                document.getElementById('rooms-container').innerHTML = 
+                    '<div class="error">Geçersiz Google Sheets URL\'si!</div>';
+                return;
+            }
+
+            // CSV export URL'si oluştur
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
             
             try {
-                const response = await fetch(url);
-                const data = await response.json();
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
                 
-                if (data.values && data.values.length > 0) {
-                    displayRooms(data.values);
+                // CSV'yi parse et
+                const rows = parseCSV(csvText);
+                
+                // İlk satır başlık, onu atla
+                const dataRows = rows.slice(1).filter(row => row.length > 0 && row[0]);
+                
+                if (dataRows.length > 0) {
+                    displayRooms(dataRows);
                 } else {
                     document.getElementById('rooms-container').innerHTML = 
                         '<div class="error">Henüz oda verisi bulunmuyor.</div>';
@@ -160,8 +179,33 @@
             } catch (error) {
                 console.error('Hata:', error);
                 document.getElementById('rooms-container').innerHTML = 
-                    '<div class="error">Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>';
+                    '<div class="error">Veriler yüklenirken bir hata oluştu. Sheets\'in herkese açık olduğundan emin olun!</div>';
             }
+        }
+
+        // Basit CSV parser
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            return lines.map(line => {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current.trim());
+                return values;
+            });
         }
 
         // Odaları ekranda göster
@@ -169,7 +213,6 @@
             const container = document.getElementById('rooms-container');
             container.className = 'rooms-grid';
             
-            // Her satır için kart oluştur
             const roomsHTML = rooms.map(room => {
                 const [name, description, capacity, price, imageUrl] = room;
                 
@@ -200,7 +243,7 @@
         // Sayfa yüklendiğinde verileri çek
         window.addEventListener('load', fetchRooms);
         
-        // Her 30 saniyede bir otomatik güncelle (opsiyonel)
+        // Her 30 saniyede bir otomatik güncelle
         setInterval(fetchRooms, 30000);
     </script>
 </body>
