@@ -3,149 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otel Odalarımız - Yönetim Paneli</title>
+    <title>Otel Odalarımız</title>
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --success-color: #27ae60;
-            --whatsapp-color: #25d366;
-            --bg-color: #f4f7f6;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg-color); 
-            margin: 0; 
-            padding: 20px; 
-            text-align: center; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        h1 { color: var(--primary-color); margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 30px; }
-
-        .container { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 25px; 
-            max-width: 1200px; 
-            margin: 0 auto; 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            width: 300px; 
-            overflow: hidden; 
-            transition: transform 0.3s;
-            border: 1px solid #eee;
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
-        .card:hover { transform: translateY(-5px); }
-
-        .card img { 
-            width: 100%; 
-            height: 200px; 
-            object-fit: cover; 
-            background-color: #ddd;
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+            font-size: 1.1em;
         }
 
-        .card-body { padding: 20px; text-align: left; }
-        .card-body h3 { margin: 0 0 10px 0; font-size: 1.25rem; color: var(--primary-color); }
-        
-        .price { 
-            font-size: 1.5rem; 
-            color: var(--success-color); 
-            font-weight: bold; 
-            margin-bottom: 10px; 
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 50px;
         }
 
-        .status { 
-            font-size: 0.9rem; 
-            color: #7f8c8d; 
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .room-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .room-content {
+            padding: 25px;
+        }
+
+        .room-title {
+            font-size: 1.8em;
+            color: #333;
             margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .room-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .room-capacity {
             display: flex;
             align-items: center;
-            gap: 5px;
-        }
-
-        .btn-whatsapp {
-            display: block;
-            background-color: var(--whatsapp-color);
-            color: white;
-            text-align: center;
-            padding: 12px;
-            text-decoration: none;
-            border-radius: 8px;
+            gap: 8px;
+            color: #667eea;
             font-weight: bold;
-            transition: background 0.3s;
         }
 
-        .btn-whatsapp:hover { background-color: #128c7e; }
+        .room-price {
+            font-size: 1.5em;
+            color: #764ba2;
+            font-weight: bold;
+        }
 
-        #error-msg { color: #e74c3c; font-weight: bold; margin-top: 20px; }
+        .error {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: #e74c3c;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
     </style>
 </head>
 <body>
-
-    <h1>Otel Odalarımız</h1>
-    <p class="subtitle">Google Sheets üzerinden anlık güncellenmektedir.</p>
-
-    <div id="error-msg"></div>
-    <div id="oda-listesi" class="container">Yükleniyor...</div>
+    <div class="container">
+        <h1>🏨 Otel Odalarımız</h1>
+        <p class="subtitle">Google Sheets üzerinden anlık güncellenmektedir.</p>
+        <div id="rooms-container" class="loading">Yükleniyor...</div>
+    </div>
 
     <script>
-        // Senin Google Sheets Bilgilerin
-        const SHEET_ID = '1i-SavB2fH_vZWLwV2ocY3JZm0P5Igp28kf666mBGX5A';
-        const SHEET_TITLE = 'Sheet1'; 
-        const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_TITLE}`;
+        // Google Sheets API ayarları
+        const SPREADSHEET_ID = 'BURAYA_SPREADSHEET_ID_YAZIN'; // Sheets URL'indeki ID
+        const API_KEY = 'BURAYA_API_KEY_YAZIN'; // Google Cloud Console'dan aldığınız API Key
+        const RANGE = 'Sheet1!A2:E'; // A2'den başlayarak tüm veriler (başlık satırını atla)
 
-        // Otel Sahibinin WhatsApp Numarası (Ülke koduyla beraber yaz)
-        const WHATSAPP_NO = "905XXXXXXXXX"; 
-
-        fetch(URL)
-            .then(res => res.text())
-            .then(data => {
-                // Google Visualization API çıktısını temizleme
-                const jsonText = data.substring(47).slice(0, -2);
-                const jsonData = JSON.parse(jsonText);
-                const rows = jsonData.table.rows;
+        // Verileri çek
+        async function fetchRooms() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
                 
-                let butunOdalarHtml = ''; 
+                if (data.values && data.values.length > 0) {
+                    displayRooms(data.values);
+                } else {
+                    document.getElementById('rooms-container').innerHTML = 
+                        '<div class="error">Henüz oda verisi bulunmuyor.</div>';
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                document.getElementById('rooms-container').innerHTML = 
+                    '<div class="error">Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>';
+            }
+        }
 
-                rows.forEach(row => {
-                    // Veri hücresi kontrolü ve güvenli okuma
-                    if (row && row.c) {
-                        const isim = (row.c[0] && row.c[0].v) ? row.c[0].v : "İsimsiz Oda";
-                        const fiyat = (row.c[1] && row.c[1].v) ? row.c[1].v : "Fiyat Sorun";
-                        const resim = (row.c[2] && row.c[2].v) ? row.c[2].v : "https://via.placeholder.com/300x200?text=Resim+Yok";
-                        const durum = (row.c[3] && row.c[3].v) ? row.c[3].v : "Belirtilmedi";
-
-                        // += Operatörü ile kartları birbirine ekleme
-                        butunOdalarHtml += `
-                            <div class="card">
-                                <img src="${resim}" onerror="this.src='https://via.placeholder.com/300x200?text=Gorsel+Yuklenemedi'">
-                                <div class="card-body">
-                                    <h3>${isim}</h3>
-                                    <div class="price">${fiyat} TL</div>
-                                    <div class="status">● Durum: ${durum}</div>
-                                    <a href="https://wa.me/${WHATSAPP_NO}?text=Merhaba, ${isim} odası için rezervasyon yaptırmak istiyorum." class="btn-whatsapp" target="_blank">
-                                        WhatsApp ile Ayırt
-                                    </a>
+        // Odaları ekranda göster
+        function displayRooms(rooms) {
+            const container = document.getElementById('rooms-container');
+            container.className = 'rooms-grid';
+            
+            // Her satır için kart oluştur
+            const roomsHTML = rooms.map(room => {
+                const [name, description, capacity, price, imageUrl] = room;
+                
+                return `
+                    <div class="room-card">
+                        <img src="${imageUrl || 'https://via.placeholder.com/400x250?text=Oda+Görseli'}" 
+                             alt="${name}" 
+                             class="room-image"
+                             onerror="this.src='https://via.placeholder.com/400x250?text=Görsel+Yüklenemedi'">
+                        <div class="room-content">
+                            <h2 class="room-title">${name}</h2>
+                            <p class="room-description">${description}</p>
+                            <div class="room-info">
+                                <div class="room-capacity">
+                                    <span>👥</span>
+                                    <span>${capacity} Kişilik</span>
                                 </div>
+                                <div class="room-price">${price} ₺</div>
                             </div>
-                        `;
-                    }
-                });
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = roomsHTML;
+        }
 
-                document.getElementById('oda-listesi').innerHTML = butunOdalarHtml;
-            })
-            .catch(err => {
-                console.error("Hata Detayı:", err);
-                document.getElementById('error-msg').innerHTML = "Veriler çekilemedi. Lütfen Tabloyu 'Web'de Yayınla' yaptığınızdan ve Sheet isminin 'Sheet1' olduğundan emin olun.";
-                document.getElementById('oda-listesi').innerHTML = "";
-            });
+        // Sayfa yüklendiğinde verileri çek
+        window.addEventListener('load', fetchRooms);
+        
+        // Her 30 saniyede bir otomatik güncelle (opsiyonel)
+        setInterval(fetchRooms, 30000);
     </script>
 </body>
 </html>
