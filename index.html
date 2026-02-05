@@ -3,59 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otel Odaları</title>
+    <title>Otel Odalarımız - Yönetim Paneli</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center; }
-        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-        .card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 250px; overflow: hidden; }
-        .card img { width: 100%; height: 160px; object-fit: cover; }
-        .card-body { padding: 15px; text-align: left; }
-        h3 { margin: 0; font-size: 1.1em; }
-        .price { color: #27ae60; font-weight: bold; margin-top: 10px; }
+        :root {
+            --primary-color: #2c3e50;
+            --success-color: #27ae60;
+            --whatsapp-color: #25d366;
+            --bg-color: #f4f7f6;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 20px; 
+            text-align: center; 
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+
+        .container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 25px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            width: 300px; 
+            overflow: hidden; 
+            transition: transform 0.3s;
+            border: 1px solid #eee;
+        }
+
+        .card:hover { transform: translateY(-5px); }
+
+        .card img { 
+            width: 100%; 
+            height: 200px; 
+            object-fit: cover; 
+            background-color: #ddd;
+        }
+
+        .card-body { padding: 20px; text-align: left; }
+        .card-body h3 { margin: 0 0 10px 0; font-size: 1.25rem; color: var(--primary-color); }
+        
+        .price { 
+            font-size: 1.5rem; 
+            color: var(--success-color); 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+        }
+
+        .status { 
+            font-size: 0.9rem; 
+            color: #7f8c8d; 
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-whatsapp {
+            display: block;
+            background-color: var(--whatsapp-color);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-whatsapp:hover { background-color: #128c7e; }
+
+        #error-msg { color: #e74c3c; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <h1>Odalarımız</h1>
+    <h1>Otel Odalarımız</h1>
+    <p class="subtitle">Google Sheets üzerinden anlık güncellenmektedir.</p>
+
+    <div id="error-msg"></div>
     <div id="oda-listesi" class="container">Yükleniyor...</div>
 
     <script>
+        // Senin Google Sheets Bilgilerin
         const SHEET_ID = '1i-SavB2fH_vZWLwV2ocY3JZm0P5Igp28kf666mBGX5A';
         const SHEET_TITLE = 'Sheet1'; 
         const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_TITLE}`;
 
+        // Otel Sahibinin WhatsApp Numarası (Ülke koduyla beraber yaz)
+        const WHATSAPP_NO = "905XXXXXXXXX"; 
+
         fetch(URL)
             .then(res => res.text())
             .then(data => {
+                // Google Visualization API çıktısını temizleme
                 const jsonText = data.substring(47).slice(0, -2);
                 const jsonData = JSON.parse(jsonText);
                 const rows = jsonData.table.rows;
                 
-                let html = ''; // Burası boş bir kutu gibi
+                let butunOdalarHtml = ''; 
 
                 rows.forEach(row => {
-                    const isim = row.c[0] ? row.c[0].v : "İsimsiz";
-                    const fiyat = row.c[1] ? row.c[1].v : "0";
-                    const resim = row.c[2] ? row.c[2].v : "https://via.placeholder.com/250";
-                    const durum = row.c[3] ? row.c[3].v : "-";
+                    // Veri hücresi kontrolü ve güvenli okuma
+                    if (row && row.c) {
+                        const isim = (row.c[0] && row.c[0].v) ? row.c[0].v : "İsimsiz Oda";
+                        const fiyat = (row.c[1] && row.c[1].v) ? row.c[1].v : "Fiyat Sorun";
+                        const resim = (row.c[2] && row.c[2].v) ? row.c[2].v : "https://via.placeholder.com/300x200?text=Resim+Yok";
+                        const durum = (row.c[3] && row.c[3].v) ? row.c[3].v : "Belirtilmedi";
 
-                    // DİKKAT: Burada += kullandık, böylece her oda listeye eklenir
-                    html += `
-                        <div class="card">
-                            <img src="${resim}">
-                            <div class="card-body">
-                                <h3>${isim}</h3>
-                                <p class="price">${fiyat} TL</p>
-                                <p style="font-size:0.8em; color:gray">${durum}</p>
+                        // += Operatörü ile kartları birbirine ekleme
+                        butunOdalarHtml += `
+                            <div class="card">
+                                <img src="${resim}" onerror="this.src='https://via.placeholder.com/300x200?text=Gorsel+Yuklenemedi'">
+                                <div class="card-body">
+                                    <h3>${isim}</h3>
+                                    <div class="price">${fiyat} TL</div>
+                                    <div class="status">● Durum: ${durum}</div>
+                                    <a href="https://wa.me/${WHATSAPP_NO}?text=Merhaba, ${isim} odası için rezervasyon yaptırmak istiyorum." class="btn-whatsapp" target="_blank">
+                                        WhatsApp ile Ayırt
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 });
 
-                document.getElementById('oda-listesi').innerHTML = html;
+                document.getElementById('oda-listesi').innerHTML = butunOdalarHtml;
             })
             .catch(err => {
-                document.getElementById('oda-listesi').innerHTML = "Hata oluştu!";
+                console.error("Hata Detayı:", err);
+                document.getElementById('error-msg').innerHTML = "Veriler çekilemedi. Lütfen Tabloyu 'Web'de Yayınla' yaptığınızdan ve Sheet isminin 'Sheet1' olduğundan emin olun.";
+                document.getElementById('oda-listesi').innerHTML = "";
             });
     </script>
 </body>
